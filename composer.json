@@ -1,0 +1,27 @@
+{
+  "type": "composer-plugin-phinx",
+  "name": "akademiano/composer-plugin-phinx",
+  "license": "Apache-2.0",
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "authors": [
+    {
+      "name": "Vasiliy Shvakin",
+      "email": "mrdatamapper@gmail.com"
+    }
+  ],
+
+
+  "autoload": {
+    "psr-4": {
+      "Akademiano\\Composer\\Phinx\\": "src"
+    }
+  },
+  "require": {
+    "composer-plugin-api": "^1.0",
+    "composer/composer": "^1.4"
+  },
+  "extra": {
+    "class": "Akademiano\\Composer\\Phinx\\Plugin"
+  }
+}
