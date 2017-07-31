@@ -1,6 +1,6 @@
 {
-  "type": "composer-plugin-phinx",
   "name": "akademiano/composer-plugin-phinx",
+  "type": "composer-plugin",
   "license": "Apache-2.0",
   "minimum-stability": "dev",
   "prefer-stable": true,
@@ -18,7 +18,7 @@
     }
   },
   "require": {
-    "composer-plugin-api": "^1.0",
+    "composer-plugin-api": "^1.1",
     "composer/composer": "^1.4"
   },
   "extra": {

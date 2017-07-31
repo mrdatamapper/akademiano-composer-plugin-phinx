@@ -21,8 +21,23 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     /** @var  [] */
     protected $config;
 
+    public static function getSubscribedEvents()
+    {
+        printf('Phinx migrations processor start');
+        $result = array(
+            ScriptEvents::POST_INSTALL_CMD => array(
+                array( 'onPostInstallCmd', 0 )
+            ),
+            ScriptEvents::POST_UPDATE_CMD  => array(
+                array( 'onPostUpdateCmd', 0 )
+            ),
+        );
+        return $result;
+    }
+
     public function activate(Composer $composer, IOInterface $io)
     {
+        printf('Phinx migrations processor start');
         $this->setComposer($composer);
         $this->setIo($io);
         $config = $composer->getPackage()->getConfig();
@@ -77,19 +92,6 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         $this->config = $config;
     }
 
-    public static function getSubscribedEvents() 
-    {
-        $result = array(
-            ScriptEvents::POST_INSTALL_CMD => array(
-                array( 'onPostInstallCmd', 0 )
-            ),
-            ScriptEvents::POST_UPDATE_CMD  => array(
-                array( 'onPostUpdateCmd', 0 )
-            ),
-        );
-        return $result;
-    }
-
     public function onPostInstallCmd(CommandEvent $event) 
     {
         $this->processPackages($event);
@@ -102,6 +104,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
     public function processPackages(Event $event)
     {
+        printf('Phinx migrations processor start');
         $composer = $this->getComposer();
         $installationManager = $composer->getInstallationManager();
         $vendorPath = $composer->getConfig()->get('vendor-dir');
