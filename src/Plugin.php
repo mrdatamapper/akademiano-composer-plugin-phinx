@@ -23,13 +23,12 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
     public static function getSubscribedEvents()
     {
-        printf('Phinx migrations processor start');
         $result = array(
             ScriptEvents::POST_INSTALL_CMD => array(
-                array( 'onPostInstallCmd', 0 )
+                array('onPostInstallCmd', 0)
             ),
-            ScriptEvents::POST_UPDATE_CMD  => array(
-                array( 'onPostUpdateCmd', 0 )
+            ScriptEvents::POST_UPDATE_CMD => array(
+                array('onPostUpdateCmd', 0)
             ),
         );
         return $result;
@@ -37,7 +36,6 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
     public function activate(Composer $composer, IOInterface $io)
     {
-        printf('Phinx migrations processor start');
         $this->setComposer($composer);
         $this->setIo($io);
         $config = $composer->getPackage()->getConfig();
@@ -92,19 +90,19 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         $this->config = $config;
     }
 
-    public function onPostInstallCmd(CommandEvent $event) 
+    public function onPostInstallCmd(\Composer\Script\Event $event)
     {
         $this->processPackages($event);
     }
 
-    public function onPostUpdateCmd(CommandEvent $event) 
+    public function onPostUpdateCmd(\Composer\Script\Event $event)
     {
         $this->processPackages($event);
     }
 
-    public function processPackages(Event $event)
+    public function processPackages(\Composer\Script\Event $event)
     {
-        printf('Phinx migrations processor start');
+        printf('Phinx migrations processor start' . PHP_EOL);
         $composer = $this->getComposer();
         $installationManager = $composer->getInstallationManager();
         $vendorPath = $composer->getConfig()->get('vendor-dir');
@@ -114,12 +112,14 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         /** @var Package[] $packages */
         $packages = $repository->getPackages();
         foreach ($packages as $package) {
+            break;
+
             $pathPackage = $installationManager->getInstallPath($package);
             $pathClasses = $this->getPackagePatch($package);
             foreach ($pathClasses as $path) {
                 $path = $pathPackage . "/" . $path;
                 $className = basename($path);
-                echo "process package {$pathPackage} : {$className} \n";
+                printf('Process package "%s" : "%s".' . PHP_EOL, $pathPackage, $className);
                 $this->tryAddMigration($path, $rootPath);
             }
         }
@@ -127,7 +127,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     }
 
 
-    public  function getPackagePatch(PackageInterface $package)
+    public function getPackagePatch(PackageInterface $package)
     {
         $autoload = $package->getAutoload();
         $patchArr = [];
@@ -173,10 +173,10 @@ class Plugin implements PluginInterface, EventSubscriberInterface
             return;
         }
         $modules = array_diff(scandir($modDir), array('..', '.'));
-        foreach($modules as $moduleDir) {
+        foreach ($modules as $moduleDir) {
             $moduleName = basename($moduleDir);
             echo "process module $moduleName \n";
-            $this->tryAddMigration($modDir . "/" .$moduleDir, $rootPath);
+            $this->tryAddMigration($modDir . "/" . $moduleDir, $rootPath);
         }
     }
 
