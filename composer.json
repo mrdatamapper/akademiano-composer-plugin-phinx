@@ -1,6 +1,7 @@
 {
   "name": "akademiano/composer-plugin-phinx",
   "type": "composer-plugin",
+  "description": "composer plugin for migrations auto copy",
   "license": "Apache-2.0",
   "minimum-stability": "dev",
   "prefer-stable": true,

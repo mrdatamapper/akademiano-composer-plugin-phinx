@@ -173,7 +173,6 @@ class Plugin implements PluginInterface, EventSubscriberInterface
     {
         $mgrPackagePath = $path . "/db/migrations";
         if (!file_exists($mgrPackagePath)) {
-//            echo EscClr::fg("dark_gray", "not exist $mgrPackagePath") . "\n";
             return;
         }
         $migrationsDir = $rootPath . "/db/migrations";
