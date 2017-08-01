@@ -14,12 +14,17 @@ use Composer\EventDispatcher\Event;
 
 class Plugin implements PluginInterface, EventSubscriberInterface
 {
+    const PHINX_CONFIG_FILE = "phinx.yml";
+
     /** @var  Composer */
     protected $composer;
     /** @var  IOInterface */
     protected $io;
     /** @var  [] */
     protected $config;
+
+    protected $rootDir;
+    protected $vendorDir;
 
     public static function getSubscribedEvents()
     {
@@ -92,12 +97,35 @@ class Plugin implements PluginInterface, EventSubscriberInterface
 
     public function onPostInstallCmd(\Composer\Script\Event $event)
     {
-        $this->processPackages($event);
+        $this->prepareMigrations($event);
     }
 
     public function onPostUpdateCmd(\Composer\Script\Event $event)
     {
+        $this->prepareMigrations($event);
+    }
+
+    public function getVendorDir()
+    {
+        if (null === $this->vendorDir) {
+            $this->vendorDir = $this->getComposer()->getConfig()->get('vendor-dir');
+        }
+        return $this->vendorDir;
+    }
+
+    public function getRootDir()
+    {
+        if (null === $this->rootDir) {
+            $this->rootDir = dirname($this->getVendorDir());
+        }
+        return $this->rootDir;
+    }
+
+    public function prepareMigrations(\Composer\Script\Event $event)
+    {
         $this->processPackages($event);
+        $this->processModules();
+        $this->phinxInfo();
     }
 
     public function processPackages(\Composer\Script\Event $event)
@@ -105,27 +133,24 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         printf('Phinx migrations processor start' . PHP_EOL);
         $composer = $this->getComposer();
         $installationManager = $composer->getInstallationManager();
-        $vendorPath = $composer->getConfig()->get('vendor-dir');
-        $rootPath = dirname($vendorPath);
         $repositoryManager = $composer->getRepositoryManager();
         $repository = $repositoryManager->getLocalRepository();
         /** @var Package[] $packages */
         $packages = $repository->getPackages();
         foreach ($packages as $package) {
-            break;
-
             $pathPackage = $installationManager->getInstallPath($package);
             $pathClasses = $this->getPackagePatch($package);
             foreach ($pathClasses as $path) {
-                $path = $pathPackage . "/" . $path;
-                $className = basename($path);
-                printf('Process package "%s" : "%s".' . PHP_EOL, $pathPackage, $className);
-                $this->tryAddMigration($path, $rootPath);
+                $path = (array)$path;
+                foreach ($path as $pathItem) {
+                    $path = $pathPackage . "/" . $pathItem;
+                    $className = basename($path);
+                    printf('Process package "%s" : "%s".' . PHP_EOL, $pathPackage, $className);
+                    $this->tryAddMigration($path, $this->getRootDir());
+                }
             }
         }
-        $this->processModules($rootPath);
     }
-
 
     public function getPackagePatch(PackageInterface $package)
     {
@@ -160,14 +185,19 @@ class Plugin implements PluginInterface, EventSubscriberInterface
             $filePath = $mgrPackagePath . '/' . $file;
             $dist = $migrationsDir . "/" . $file;
             if (!file_exists($dist)) {
-                copy($filePath, $dist);
+                try {
+                    copy($filePath, $dist);
+                } catch (\Throwable $e) {
+                    print(EscClr::fg("red", sprintf('Error "%s" in copy file from "%s" to "%s"' . PHP_EOL, $e->getMessage(), $filePath, $dist)));
+                }
                 echo EscClr::fg("green", "install migration $file") . "\n";
             }
         }
     }
 
-    public function processModules($rootPath)
+    public function processModules()
     {
+        $rootPath = $this->getRootDir();
         $modDir = $rootPath . "/modules";
         if (!file_exists($modDir)) {
             return;
@@ -180,4 +210,39 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         }
     }
 
+    public function phinxInfo()
+    {
+        $rootDir = $this->getRootDir();
+        $vendorDir = $this->getVendorDir();
+        if (!file_exists($rootDir . DIRECTORY_SEPARATOR . self::PHINX_CONFIG_FILE)) {
+            $return = null;
+            $output = [];
+            $command = $vendorDir . DIRECTORY_SEPARATOR . "robmorgan/phinx/bin/phinx init 2>&1";
+            exec($command, $output, $return);
+            if ($return !== 0) {
+                print(EscClr::fg("red", sprintf('----------' .PHP_EOL.
+                    'Execute : %s' . PHP_EOL . '%s', $command, implode(PHP_EOL, $output))));
+            }
+        }
+
+        $return = null;
+        $output = [];
+        $command = $vendorDir . DIRECTORY_SEPARATOR . "robmorgan/phinx/bin/phinx test 2>&1";
+        exec($command, $output, $return);
+        if ($return !== 0) {
+            print(EscClr::fg("red", sprintf('----------' .PHP_EOL.
+                'Execute : %s' . PHP_EOL . '%s', $command, implode(PHP_EOL, $output))));
+        } else {
+            $return = null;
+            $output = [];
+            $command = $vendorDir . DIRECTORY_SEPARATOR . "robmorgan/phinx/bin/phinx status 2>&1";
+            exec($command, $output, $return);
+            $message =  sprintf('----------' .PHP_EOL.
+                'Execute : %s' . PHP_EOL . '%s', $command, implode(PHP_EOL, $output));;
+            if ($return !== 0) {
+                $message = EscClr::fg("red", $message);
+            }
+            print($message);
+        }
+    }
 }
