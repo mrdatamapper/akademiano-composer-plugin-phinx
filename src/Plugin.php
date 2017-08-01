@@ -144,8 +144,6 @@ class Plugin implements PluginInterface, EventSubscriberInterface
                 $path = (array)$path;
                 foreach ($path as $pathItem) {
                     $path = $pathPackage . "/" . $pathItem;
-                    $className = basename($path);
-                    printf('Process package "%s" : "%s".' . PHP_EOL, $pathPackage, $className);
                     $this->tryAddMigration($path, $this->getRootDir());
                 }
             }
