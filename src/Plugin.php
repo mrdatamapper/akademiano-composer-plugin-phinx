@@ -145,6 +145,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
                 foreach ($path as $pathItem) {
                     $path = $pathPackage . "/" . $pathItem;
                     $this->tryAddMigration($path, $this->getRootDir());
+                    $this->tryAddSeed($path, $this->getRootDir());
                 }
             }
         }
