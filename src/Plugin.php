@@ -192,6 +192,28 @@ class Plugin implements PluginInterface, EventSubscriberInterface
         }
     }
 
+    public function tryAddSeed($path, $rootPath)
+    {
+        $mgrPackagePath = $path . "/db/seeds";
+        if (!file_exists($mgrPackagePath)) {
+            return;
+        }
+        $migrationsDir = $rootPath . "/db/seeds";
+        $migrations = array_diff(scandir($mgrPackagePath), array('..', '.'));
+        foreach ($migrations as $file) {
+            $filePath = $mgrPackagePath . '/' . $file;
+            $dist = $migrationsDir . "/" . $file;
+            if (!file_exists($dist)) {
+                try {
+                    copy($filePath, $dist);
+                } catch (\Throwable $e) {
+                    print(EscClr::fg("red", sprintf('Error "%s" in copy file from "%s" to "%s"' . PHP_EOL, $e->getMessage(), $filePath, $dist)));
+                }
+                echo EscClr::fg("green", "install seed $file") . "\n";
+            }
+        }
+    }
+
     public function processModules()
     {
         $rootPath = $this->getRootDir();
@@ -204,6 +226,7 @@ class Plugin implements PluginInterface, EventSubscriberInterface
             $moduleName = basename($moduleDir);
             echo "process module $moduleName \n";
             $this->tryAddMigration($modDir . "/" . $moduleDir, $rootPath);
+            $this->tryAddSeed($modDir . "/" . $moduleDir, $rootPath);
         }
     }
 
