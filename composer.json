@@ -20,7 +20,8 @@
   },
   "require": {
     "composer-plugin-api": "^1.1",
-    "composer/composer": "^1.9"
+    "composer/composer": "^1.9",
+    "akademiano/project-tools": "@dev"
   },
   "extra": {
     "class": "Akademiano\\Composer\\Phinx\\Plugin"
